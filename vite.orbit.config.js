@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// The build Orbit serves at /erd-app/: the embed entry of
+// The build Orbit serves at /erd-app/: the embed and headless entries of
 // docs/orbit/bridge.md. `npm run build:orbit`; see docs/orbit/README.md.
 
 const root = fileURLToPath(new URL(".", import.meta.url));
@@ -41,6 +41,7 @@ export default defineConfig({
     rolldownOptions: {
       input: {
         embed: `${root}embed.html`,
+        headless: `${root}headless.html`,
       },
     },
   },
