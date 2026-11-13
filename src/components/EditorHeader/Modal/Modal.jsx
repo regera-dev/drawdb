@@ -222,12 +222,7 @@ export default function Modal({
       setViews([]);
     } else {
       setTables((prev) => [...prev, ...diagramData.tables]);
-      setRelationships((prev) =>
-        [...prev, ...diagramData.relationships].map((r, i) => ({
-          ...r,
-          id: i,
-        })),
-      );
+      setRelationships((prev) => [...prev, ...diagramData.relationships]);
       if (databases[database].hasTypes && diagramData.types.length)
         setTypes((prev) => [...prev, ...diagramData.types]);
       if (databases[database].hasEnums && diagramData.enums.length)

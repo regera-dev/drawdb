@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import { dbToTypes } from "../data/datatypes";
 import { arrangeTables } from "./arrangeTables";
 import { jsonDiagramIsValid } from "./validateSchema";
@@ -97,9 +98,9 @@ export function normalizeAiDiagram(raw, database) {
 
   const diagram = {
     tables,
-    relationships: relationships.map((relationship, id) => ({
+    relationships: relationships.map((relationship) => ({
       ...relationship,
-      id,
+      id: nanoid(),
     })),
     enums,
     types,
