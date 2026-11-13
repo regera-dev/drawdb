@@ -33,7 +33,7 @@ validates, with these keys and nothing else at the top level:
 
 ```ts
 type ErdDiagram = {
-  database: string;          // drawDB's DB enum value: "generic", "mysql", "postgresql", "sqlite", "mariadb", "mssql", "oracledb"
+  database: string;          // drawDB's DB enum value (src/data/constants.js): "generic", "mysql", "postgresql", "sqlite", "mariadb", "transactsql", "oraclesql"
   title?: string;
   sqlHeader?: string;
   tables: Table[];           // drawDB table objects, ids string | number
