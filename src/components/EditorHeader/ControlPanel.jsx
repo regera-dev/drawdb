@@ -225,6 +225,7 @@ export default function ControlPanel({
   const isTemplate = useMatch("/editor/templates/:id");
   const navigate = useNavigateWithParams();
   const extensions = useExtensions();
+  const isShown = (control) => !extensions.hiddenControls?.has(control);
 
   const swapDbmlSnapshot = (entry) => {
     const current = { tables, relationships, enums };
@@ -1182,7 +1183,9 @@ export default function ControlPanel({
     }
     setSaveState(State.SAVING);
   };
-  const { cloud, local } = useDiagramList();
+  const { cloud, local } = useDiagramList({
+    enabled: isShown("file.open_recent"),
+  });
   const recentlyOpenedDiagrams = useMemo(() => {
     const sorted = sortDiagrams(mergeDiagrams(cloud, local), {
       key: "lastModified",
@@ -1276,7 +1279,7 @@ export default function ControlPanel({
       setLayout((p) => ({ ...p, header: true, sidebar: true, toolbar: true }));
   }, [fullscreen, setLayout]);
 
-  const menu = {
+  const allMenu = {
     file: {
       new: {
         function: () => window.open("/editor/templates/blank", "_blank"),
@@ -2098,11 +2101,24 @@ export default function ControlPanel({
     },
   };
 
+  const menu = Object.fromEntries(
+    Object.entries(allMenu)
+      .map(([category, items]) => [
+        category,
+        Object.fromEntries(
+          Object.entries(items).filter(([item]) =>
+            isShown(`${category}.${item}`),
+          ),
+        ),
+      ])
+      .filter(([, items]) => Object.keys(items).length > 0),
+  );
+
   useHotkeys("mod+i", fileImport, EDITOR_HOTKEY);
   useHotkeys("mod+z", undo, EDITOR_HOTKEY);
   useHotkeys("mod+y", redo, EDITOR_HOTKEY);
-  useHotkeys("mod+s", save, EDITOR_HOTKEY);
-  useHotkeys("mod+o", open, EDITOR_HOTKEY);
+  useHotkeys("mod+s", isShown("file.save") ? save : () => {}, EDITOR_HOTKEY);
+  useHotkeys("mod+o", isShown("file.open") ? open : () => {}, EDITOR_HOTKEY);
   useHotkeys("mod+e", edit, EDITOR_HOTKEY);
   useHotkeys("mod+d", duplicate, EDITOR_HOTKEY);
   useHotkeys("mod+c", copy, CLIPBOARD_HOTKEY);
@@ -2114,7 +2130,11 @@ export default function ControlPanel({
   useHotkeys("mod+down", zoomOut, EDITOR_HOTKEY);
   useHotkeys("mod+shift+m", viewStrictMode, EDITOR_HOTKEY);
   useHotkeys("mod+shift+f", viewFieldSummary, EDITOR_HOTKEY);
-  useHotkeys("mod+shift+s", saveDiagramAs, EDITOR_HOTKEY);
+  useHotkeys(
+    "mod+shift+s",
+    isShown("file.save_as") ? saveDiagramAs : () => {},
+    EDITOR_HOTKEY,
+  );
   useHotkeys("mod+alt+c", copyAsImage, EDITOR_HOTKEY);
   useHotkeys("enter", resetView, EDITOR_HOTKEY);
   useHotkeys("mod+h", () => window.open(socials.docs, "_blank"), EDITOR_HOTKEY);
@@ -2136,7 +2156,7 @@ export default function ControlPanel({
             {header()}
             <div className="flex items-center gap-2 me-7">
               <Slot name="header-actions-start" />
-              {!isTemplate && (
+              {!isTemplate && isShown("header.share") && (
                 <Button
                   type="primary"
                   className="!text-base !pe-6 !ps-5 !py-[18px] !rounded-md"
@@ -2381,43 +2401,55 @@ export default function ControlPanel({
               <i className="fa-solid fa-wand-magic-sparkles" />
             </button>
           </Dropdown>
-          <Divider layout="vertical" margin="8px" />
-          <Tooltip content={t("save")} position="bottom">
-            <button
-              className="py-1 px-2 hover-2 rounded-sm flex items-center disabled:opacity-50"
-              onClick={save}
-              disabled={layout.readOnly}
-            >
-              <IconSaveStroked size="extra-large" />
-            </button>
-          </Tooltip>
-          <Divider layout="vertical" margin="8px" />
-          <Tooltip content={t("versions")} position="bottom">
-            <button
-              className="py-1 px-2 hover-2 rounded-sm text-xl -mt-0.5"
-              onClick={() => setSidesheet(SIDESHEET.VERSIONS)}
-            >
-              <i className="fa-solid fa-code-branch" />
-            </button>
-          </Tooltip>
-          <Divider layout="vertical" margin="8px" />
-          <Tooltip content={t("theme")} position="bottom">
-            <button
-              className="py-1 px-2 hover-2 rounded-sm text-xl -mt-0.5"
-              onClick={() => {
-                const body = document.body;
-                if (body.hasAttribute("theme-mode")) {
-                  if (body.getAttribute("theme-mode") === "light") {
-                    menu["view"]["theme"].children[1].function();
-                  } else {
-                    menu["view"]["theme"].children[0].function();
-                  }
-                }
-              }}
-            >
-              <i className="fa-solid fa-circle-half-stroke" />
-            </button>
-          </Tooltip>
+          {isShown("toolbar.save") && (
+            <>
+              <Divider layout="vertical" margin="8px" />
+              <Tooltip content={t("save")} position="bottom">
+                <button
+                  className="py-1 px-2 hover-2 rounded-sm flex items-center disabled:opacity-50"
+                  onClick={save}
+                  disabled={layout.readOnly}
+                >
+                  <IconSaveStroked size="extra-large" />
+                </button>
+              </Tooltip>
+            </>
+          )}
+          {isShown("toolbar.versions") && (
+            <>
+              <Divider layout="vertical" margin="8px" />
+              <Tooltip content={t("versions")} position="bottom">
+                <button
+                  className="py-1 px-2 hover-2 rounded-sm text-xl -mt-0.5"
+                  onClick={() => setSidesheet(SIDESHEET.VERSIONS)}
+                >
+                  <i className="fa-solid fa-code-branch" />
+                </button>
+              </Tooltip>
+            </>
+          )}
+          {isShown("toolbar.theme") && (
+            <>
+              <Divider layout="vertical" margin="8px" />
+              <Tooltip content={t("theme")} position="bottom">
+                <button
+                  className="py-1 px-2 hover-2 rounded-sm text-xl -mt-0.5"
+                  onClick={() => {
+                    const body = document.body;
+                    if (body.hasAttribute("theme-mode")) {
+                      if (body.getAttribute("theme-mode") === "light") {
+                        allMenu["view"]["theme"].children[1].function();
+                      } else {
+                        allMenu["view"]["theme"].children[0].function();
+                      }
+                    }
+                  }}
+                >
+                  <i className="fa-solid fa-circle-half-stroke" />
+                </button>
+              </Tooltip>
+            </>
+          )}
         </div>
       </div>
     );
@@ -2485,7 +2517,11 @@ export default function ControlPanel({
                   // https://stackoverflow.com/a/70976017/1137077
                   e.target.releasePointerCapture(e.pointerId);
                 }}
-                onClick={!layout.readOnly && (() => setModal(MODAL.RENAME))}
+                onClick={
+                  !layout.readOnly &&
+                  isShown("file.rename") &&
+                  (() => setModal(MODAL.RENAME))
+                }
               >
                 <span>{isTemplate ? t("templates") : t("diagrams")}</span>
                 <span className="select-none text-zinc-400 dark:text-zinc-500 mx-1">
@@ -2498,9 +2534,9 @@ export default function ControlPanel({
                   </Tag>
                 )}
               </div>
-              {(showEditName || modal === MODAL.RENAME) && !layout.readOnly && (
-                <IconEdit />
-              )}
+              {(showEditName || modal === MODAL.RENAME) &&
+                !layout.readOnly &&
+                isShown("file.rename") && <IconEdit />}
             </div>
             <div className="flex items-center">
               <div className="flex justify-start text-md select-none me-2">
@@ -2693,7 +2729,7 @@ export default function ControlPanel({
                 ))}
               </div>
               {layout.readOnly && <Tag size="small">{t("read_only")}</Tag>}
-              {!layout.readOnly && (
+              {!layout.readOnly && isShown("header.save_state") && (
                 <Tag
                   size="small"
                   type="light"

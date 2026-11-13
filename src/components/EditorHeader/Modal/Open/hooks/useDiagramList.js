@@ -10,14 +10,17 @@ function readError(err) {
   return err?.response?.data?.error || err?.message;
 }
 
-export function useDiagramList() {
+export function useDiagramList({ enabled = true } = {}) {
   const { t } = useTranslation();
   const extensions = useExtensions();
   const cloudList = extensions?.cloudList;
-  const cloudEnabled = typeof cloudList === "function";
+  const cloudEnabled = enabled && typeof cloudList === "function";
   const currentUserId = extensions?.cloudCurrentUserId ?? null;
 
-  const local = useLiveQuery(() => db.diagrams.toArray(), []);
+  const local = useLiveQuery(
+    () => (enabled ? db.diagrams.toArray() : []),
+    [enabled],
+  );
   const [cloud, setCloud] = useState(() =>
     cloudEnabled ? { loading: true, error: null, items: null } : DISABLED,
   );
