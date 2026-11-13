@@ -14,6 +14,15 @@ shows a "Source" link to the exact commit it was built from (AGPL-3.0 §13).
 
 Each entry names the date of the change (AGPL-3.0 §5(a)).
 
+### 2026-11-13: PostgreSQL forms the SQL import parses (T-07665)
+
+- `fromSql` with `postgresql` first rewrites three PostgreSQL forms that
+  node-sql-parser rejects (`src/orbit/postgres.js`): a `REFERENCES t` with no
+  column list names `t`'s primary key from the same DDL, `UNIQUE NULLS [NOT]
+  DISTINCT` becomes `UNIQUE`, and a `GENERATED ALWAYS AS (...) STORED` clause
+  is dropped so the column imports with its type. Line breaks survive, so a
+  parse error still names its line.
+
 ### 2026-11-13: A slimmer embed header (T-07664)
 
 - Orbit's page bar already names the page, so the embed hides drawDB's logo

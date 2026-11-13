@@ -4,6 +4,7 @@ import { DB } from "../data/constants";
 import { importSQL } from "../utils/importSQL";
 import { fromDBML } from "../utils/importFrom/dbml";
 import { arrangeDiagram } from "./arrange";
+import { normalizePostgres } from "./postgres";
 
 function located(error) {
   const at = error.location?.start;
@@ -50,7 +51,10 @@ export function fromSql(sql, database) {
     ast =
       database === DB.ORACLESQL
         ? new OracleParser().parse(sql)
-        : new Parser().astify(sql, { database });
+        : new Parser().astify(
+            database === DB.POSTGRES ? normalizePostgres(sql) : sql,
+            { database },
+          );
   } catch (error) {
     throw new Error(located(error));
   }
