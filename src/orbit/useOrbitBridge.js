@@ -34,7 +34,9 @@ const SELECTED_COLLECTION = {
  * Speaks docs/orbit/bridge.md for the embed. A `change` is the editor state
  * differing from `synced`, the diagram the host last sent or was last sent.
  * `init` and `remote` move `synced` along with the state they apply, so only
- * a person's edits (undo and redo included) ever differ from it.
+ * a person's edits (undo and redo included) ever differ from it. Each change
+ * names the generation of the init or remote it was made on; edits still
+ * waiting to go out leave under the old generation before a new one applies.
  */
 export function useOrbitBridge({ readOnlyMode, title, setTitle }) {
   const {
@@ -72,6 +74,7 @@ export function useOrbitBridge({ readOnlyMode, title, setTitle }) {
     views,
   });
   const syncedRef = useRef(null);
+  const generationRef = useRef(null);
   const timerRef = useRef(null);
 
   const flush = useCallback(() => {
@@ -80,7 +83,7 @@ export function useOrbitBridge({ readOnlyMode, title, setTitle }) {
     const live = liveRef.current;
     if (!syncedRef.current || sameEdits(syncedRef.current, live)) return;
     syncedRef.current = live;
-    postToHost("change", { diagram: live });
+    postToHost("change", { diagram: live, generation: generationRef.current });
   }, []);
 
   useEffect(() => {
@@ -127,6 +130,9 @@ export function useOrbitBridge({ readOnlyMode, title, setTitle }) {
 
   const parsedOrError = (message) => {
     try {
+      if (!Number.isInteger(message.generation) || message.generation < 0) {
+        throw new Error("generation must be a whole number of at least 0");
+      }
       return parseDiagram(message.diagram);
     } catch (error) {
       postToHost("error", { message: `${message.type}: ${error.message}` });
@@ -134,12 +140,17 @@ export function useOrbitBridge({ readOnlyMode, title, setTitle }) {
     }
   };
 
+  const adopt = (message, diagram) => {
+    flush();
+    generationRef.current = message.generation;
+    syncedRef.current = diagram;
+    applyDiagram(diagram);
+  };
+
   const init = (message) => {
     const diagram = parsedOrError(message);
     if (!diagram) return;
-    clearTimeout(timerRef.current);
-    syncedRef.current = diagram;
-    applyDiagram(diagram);
+    adopt(message, diagram);
     setUndoStack([]);
     setRedoStack([]);
     setSelectedElement((prev) => ({
@@ -161,14 +172,13 @@ export function useOrbitBridge({ readOnlyMode, title, setTitle }) {
         document.getElementById("canvas")?.getBoundingClientRect(),
       ),
     );
+    postToHost("applied", { generation: message.generation });
   };
 
   const remote = (message) => {
     const diagram = parsedOrError(message);
     if (!diagram) return;
-    flush();
-    syncedRef.current = diagram;
-    applyDiagram(diagram);
+    adopt(message, diagram);
     setSelectedElement((prev) => {
       const collection = SELECTED_COLLECTION[prev.element];
       if (!collection || diagram[collection].some((e) => e.id === prev.id)) {
@@ -176,6 +186,7 @@ export function useOrbitBridge({ readOnlyMode, title, setTitle }) {
       }
       return { ...prev, element: ObjectType.NONE, id: -1, open: false };
     });
+    postToHost("applied", { generation: message.generation });
   };
 
   const handlers = { init, remote, theme: (m) => applyTheme(m.theme) };

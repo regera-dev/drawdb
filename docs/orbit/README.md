@@ -14,6 +14,16 @@ shows a "Source" link to the exact commit it was built from (AGPL-3.0 §13).
 
 Each entry names the date of the change (AGPL-3.0 §5(a)).
 
+### 2026-11-13: Numbered init and remote messages (T-07659)
+
+- The bridge is version 2. Each `init` and `remote` carries a `generation`.
+  Each `change` names the generation it was made on, and the frame answers
+  each `init` and `remote` it applies with `applied`
+  (`src/orbit/useOrbitBridge.js`, [bridge.md](bridge.md) "Generations"). An
+  `init` now sends edits still waiting to go out before it replaces the
+  state, as a `remote` already did. Orbit uses the generation to replay a
+  change made before a newer state arrived, instead of guessing from time.
+
 ### 2026-11-13: PostgreSQL forms the SQL import parses (T-07665)
 
 - `fromSql` with `postgresql` first rewrites three PostgreSQL forms that

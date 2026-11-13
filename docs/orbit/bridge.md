@@ -61,17 +61,32 @@ a message only when `event.origin === window.location.origin` and
 
 | type | fields | when |
 | --- | --- | --- |
-| `ready` | `version: 1` | The editor mounted and can take `init`. Sent once per load. |
-| `change` | `diagram: ErdDiagram` | After a person's edit changed the diagram (including undo/redo). Never after `init` or `remote`. The frame may coalesce edits but sends within 300 ms of the last one. |
-| `error` | `message: string` | The frame could not apply `init` or `remote` (bad diagram). |
+| `ready` | `version: 2` | The editor mounted and can take `init`. Sent once per load. |
+| `change` | `diagram: ErdDiagram`, `generation: number` | After a person's edit changed the diagram (including undo/redo). Never after `init` or `remote`. `generation` is that of the last `init` or `remote` the frame applied before the edit. The frame may coalesce edits but sends within 300 ms of the last one. |
+| `applied` | `generation: number` | The frame applied the `init` or `remote` with this generation. Every later `change` names it or a newer one. |
+| `error` | `message: string` | The frame could not apply `init` or `remote` (bad diagram or generation). |
 
 ### Host to frame
 
 | type | fields | effect |
 | --- | --- | --- |
-| `init` | `diagram`, `readOnly: boolean`, `theme: "light" \| "dark"` | Replaces the editor state, clears undo and redo, and fits the view to the diagram (an empty diagram stays at 100%). |
-| `remote` | `diagram` | The board's newer state (another person's or an agent's save). Replaces the editor state without entering the undo stack and without emitting `change`. Keeps the viewport, the selection when the selected entity still exists, and an open side-panel item. |
+| `init` | `generation`, `diagram`, `readOnly: boolean`, `theme: "light" \| "dark"` | Replaces the editor state, clears undo and redo, and fits the view to the diagram (an empty diagram stays at 100%). |
+| `remote` | `generation`, `diagram` | The board's newer state (another person's or an agent's save). Replaces the editor state without entering the undo stack and without emitting `change`. Keeps the viewport, the selection when the selected entity still exists, and an open side-panel item. |
 | `theme` | `theme` | Switches light or dark. |
+
+### Generations
+
+The host numbers each `init` and `remote` it sends, rising by one each time
+(a whole number, 0 or more). Before the frame applies an `init` or `remote`,
+it sends any edit still waiting to go out, as a `change` that names the
+previous generation. Then it applies the new state and answers `applied`.
+
+A `change` that names an older generation than the host's latest was made
+before the frame saw the newer state. The host replays that change's edits,
+measured from the diagram it sent under that generation, onto its latest
+diagram, and sends the result as a new `remote`. The host keeps each diagram
+it sent until an `applied` or `change` names a newer generation. A
+`change` that names a generation the host never sent is a protocol error.
 
 ## `window.orbitErd` (headless entry)
 

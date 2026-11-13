@@ -1,10 +1,10 @@
 // The postMessage half of docs/orbit/bridge.md, frame side.
 
 const SOURCE = "orbit-erd";
-export const BRIDGE_VERSION = 1;
+export const BRIDGE_VERSION = 2;
 export const THEMES = new Set(["light", "dark"]);
 
-/** Sends a frame-to-host message: ready, change or error. */
+/** Sends a frame-to-host message: ready, change, applied or error. */
 export function postToHost(type, fields = {}) {
   window.parent.postMessage(
     { source: SOURCE, type, ...fields },
