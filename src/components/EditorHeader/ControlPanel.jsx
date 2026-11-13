@@ -2481,63 +2481,67 @@ export default function ControlPanel({
         style={isRtl(i18n.language) ? { direction: "rtl" } : {}}
       >
         <div className="flex justify-start items-center">
-          <Link to="/">
-            <img
-              width={54}
-              src={icon}
-              alt={t("logo")}
-              className="ms-7 min-w-[54px]"
-            />
-          </Link>
+          {isShown("header.logo") && (
+            <Link to="/">
+              <img
+                width={54}
+                src={icon}
+                alt={t("logo")}
+                className="ms-7 min-w-[54px]"
+              />
+            </Link>
+          )}
           <div className="ms-1 mt-1">
-            <div className="flex items-center ms-3 gap-2">
-              {databases[database].image && (
-                <img
-                  src={databases[database].image}
-                  className="h-5"
-                  style={{
-                    filter:
-                      "opacity(0.4) drop-shadow(0 0 0 white) drop-shadow(0 0 0 white)",
-                  }}
-                  alt={t("database_icon", {
-                    databaseName: databases[database].name,
-                  })}
-                  title={t("database_diagram", {
-                    databaseName: databases[database].name,
-                  })}
-                />
-              )}
-              <Slot name="diagram-title-prefix" />
-              <div
-                className="text-xl flex items-center gap-1 me-1"
-                onPointerEnter={(e) => e.isPrimary && setShowEditName(true)}
-                onPointerLeave={(e) => e.isPrimary && setShowEditName(false)}
-                onPointerDown={(e) => {
-                  // Required for onPointerLeave to trigger when a touch pointer leaves
-                  // https://stackoverflow.com/a/70976017/1137077
-                  e.target.releasePointerCapture(e.pointerId);
-                }}
-                onClick={
-                  !layout.readOnly &&
-                  isShown("file.rename") &&
-                  (() => setModal(MODAL.RENAME))
-                }
-              >
-                <span>{isTemplate ? t("templates") : t("diagrams")}</span>
-                <span className="select-none text-zinc-400 dark:text-zinc-500 mx-1">
-                  /
-                </span>
-                <span>{title}</span>
-                {version && (
-                  <Tag className="mt-1" color="blue" size="small">
-                    {version.substring(0, 7)}
-                  </Tag>
+            {isShown("header.title") && (
+              <div className="flex items-center ms-3 gap-2">
+                {databases[database].image && (
+                  <img
+                    src={databases[database].image}
+                    className="h-5"
+                    style={{
+                      filter:
+                        "opacity(0.4) drop-shadow(0 0 0 white) drop-shadow(0 0 0 white)",
+                    }}
+                    alt={t("database_icon", {
+                      databaseName: databases[database].name,
+                    })}
+                    title={t("database_diagram", {
+                      databaseName: databases[database].name,
+                    })}
+                  />
                 )}
+                <Slot name="diagram-title-prefix" />
+                <div
+                  className="text-xl flex items-center gap-1 me-1"
+                  onPointerEnter={(e) => e.isPrimary && setShowEditName(true)}
+                  onPointerLeave={(e) => e.isPrimary && setShowEditName(false)}
+                  onPointerDown={(e) => {
+                    // Required for onPointerLeave to trigger when a touch pointer leaves
+                    // https://stackoverflow.com/a/70976017/1137077
+                    e.target.releasePointerCapture(e.pointerId);
+                  }}
+                  onClick={
+                    !layout.readOnly &&
+                    isShown("file.rename") &&
+                    (() => setModal(MODAL.RENAME))
+                  }
+                >
+                  <span>{isTemplate ? t("templates") : t("diagrams")}</span>
+                  <span className="select-none text-zinc-400 dark:text-zinc-500 mx-1">
+                    /
+                  </span>
+                  <span>{title}</span>
+                  {version && (
+                    <Tag className="mt-1" color="blue" size="small">
+                      {version.substring(0, 7)}
+                    </Tag>
+                  )}
+                </div>
+                {(showEditName || modal === MODAL.RENAME) &&
+                  !layout.readOnly &&
+                  isShown("file.rename") && <IconEdit />}
               </div>
-              {(showEditName || modal === MODAL.RENAME) &&
-                !layout.readOnly &&
-                isShown("file.rename") && <IconEdit />}
-            </div>
+            )}
             <div className="flex items-center">
               <div className="flex justify-start text-md select-none me-2">
                 {Object.keys(menu).map((category) => (

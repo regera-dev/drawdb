@@ -14,6 +14,18 @@ shows a "Source" link to the exact commit it was built from (AGPL-3.0 §13).
 
 Each entry names the date of the change (AGPL-3.0 §5(a)).
 
+### 2026-11-13: A slimmer embed header (T-07664)
+
+- Orbit's page bar already names the page, so the embed hides drawDB's logo
+  and its "Diagrams / <title>" line with two new `hiddenControls` ids,
+  `header.logo` and `header.title`
+  (`src/components/EditorHeader/ControlPanel.jsx`). The title line holds the
+  database icon too. The File, Edit, View, Settings and Help menus stay.
+- The Source link moved out of the canvas, where a table could sit under it:
+  into the header's `header-actions-end` slot in edit mode, beside the zoom
+  controls in view mode, and to the canvas corner only while a person has
+  hidden the header (`src/orbit/EmbedEditor.jsx`, `src/orbit/SourceLink.jsx`).
+
 ### 2026-11-13: Orbit embed, headless render and stable ids (T-07661)
 
 New code, all under `src/orbit/` unless named:
@@ -43,7 +55,8 @@ Changes to upstream files, kept narrow so upstream merges stay easy:
   `hiddenControls`, a `Set` of ids such as `file.open`, `header.share` or
   `toolbar.versions`. A hidden item's hotkey does nothing. The embed hides
   open, new, save, save as, rename, delete, templates, share, version history,
-  the theme switch, autosave, custom types and the local storage tools.
+  the theme switch, autosave, custom types and the local storage tools, and,
+  since T-07664, the logo and the title line.
 - `src/components/EditorHeader/Modal/Open/hooks/useDiagramList.js`: takes
   `{ enabled }`, so the recent-diagrams list does not query IndexedDB when
   that menu item is hidden.

@@ -22,10 +22,14 @@ import { fitTransform } from "./diagram";
 import SourceLink from "./SourceLink";
 
 // Header and toolbar controls that make no sense inside Orbit: Orbit stores,
-// shares, versions and themes the diagram, and drawDB's local diagram list,
-// templates, gists and IndexedDB storage stay out of the frame.
+// shares, versions and themes the diagram, its page bar shows the title, and
+// drawDB's local diagram list, templates, gists and IndexedDB storage stay out
+// of the frame. The header keeps its menus and gains the Source link.
 export const EMBED_EXTENSIONS = {
+  "header-actions-end": <SourceLink />,
   hiddenControls: new Set([
+    "header.logo",
+    "header.title",
     "file.new",
     "file.new_window",
     "file.open",
@@ -126,7 +130,9 @@ function EditLayout({ title, setTitle }) {
               <FloatingControls />
             </div>
           )}
-          <SourceLink />
+          {!layout.header && (
+            <SourceLink className="absolute left-3 bottom-2 z-20" />
+          )}
         </div>
       </div>
     </div>
@@ -141,7 +147,6 @@ function ViewLayout() {
       <div className="absolute right-4 bottom-4 z-20">
         <ViewControls />
       </div>
-      <SourceLink />
     </div>
   );
 }
@@ -194,6 +199,8 @@ function ViewControls() {
           <i className="bi bi-arrows-fullscreen" />
         </button>
       </Tooltip>
+      <Divider align="center" layout="vertical" />
+      <SourceLink className="px-3 py-2" />
     </div>
   );
 }
